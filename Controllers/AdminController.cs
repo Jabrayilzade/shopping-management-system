@@ -18,7 +18,7 @@ namespace ShoppingDB.Controllers
 {
     [Route("api/v1/[controller]/[action]")]
     [ApiController]
-    [Authorize(Roles = Roles.Admin)]
+    //[Authorize(Roles = Roles.Admin)]
     public class AdminController : ControllerBase
     {
         private readonly IAdminService adminService;
@@ -34,6 +34,16 @@ namespace ShoppingDB.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> GetCustomerInfoAsync(int customerId)
+        {
+            var customer = await adminService.GetCustomerInfoAsync(customerId);
+            if (customer == null)
+                return NotFound();
+
+            return Ok(customer);
+        }
+
+        [HttpGet]
         public async Task<IActionResult> GetAllCustomersAsync()
         {
             var customers = await adminService.GetCustomersAsync();
@@ -41,10 +51,21 @@ namespace ShoppingDB.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetCustomersInIntervalAsync(int year, int month, int day)
+        public async Task<IActionResult> GetUserByIdAsync(int userId)
         {
-            DateTime interval = new DateTime(year, month, day);
-            return Ok();
+            var userInfo = await adminService.GetUserByIdAsync(userId);
+            if (userInfo == null)
+                return NotFound();
+            return Ok(userInfo);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetCustomersInIntervalAsync(int yearFrom, int monthFrom, int dayFrom, int yearUntill, int monthUntill, int dayUntill)
+        {
+            DateTime from = new DateTime(yearFrom, monthFrom, dayFrom);
+            DateTime until = new DateTime(yearUntill, monthUntill, dayUntill);
+            var loggedCustomers = adminService.GetCustomersInIntervalAsync(from, until);
+            return Ok(loggedCustomers);
         }
 
         [HttpGet]

@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
-using Npgsql;
+using ShoppingDB.Models;
 
 namespace ShoppingDB.Services
 {
-    public interface IDbConnectionFactory
+    public interface IMailService
     {
-        IDbConnection CreateDbConnection();
+        Task SendEmailAsync(MailRequest mailRequest);
     }
 }

@@ -5,10 +5,11 @@ using System.Threading.Tasks;
 using System.Configuration;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
+using System.Data;
 
 namespace ShoppingDB.Services
 {
-    public class DapperDbConnection : IDbConnection
+    public class DapperDbConnection : IDbConnectionFactory
     {
         public DapperDbConnection(IConfiguration configuration)
         {
@@ -16,15 +17,14 @@ namespace ShoppingDB.Services
         }
 
         public IConfiguration Configuration { get; }
-        public NpgsqlConnection CreateDbConnection()
+
+        public IDbConnection CreateDbConnection()
         {
             string connectionName = Configuration.GetConnectionString("ShoppingMS");
-            using(NpgsqlConnection connection = new NpgsqlConnection(connectionName))
-            {
-                connection.Open();
-                return new NpgsqlConnection(connectionName);
-            }
+            IDbConnection connection = new NpgsqlConnection(connectionName);
+            Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
+            connection.Open();
+            return connection;
         }
-
     }
 }

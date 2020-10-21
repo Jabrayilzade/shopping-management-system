@@ -27,7 +27,7 @@ using React.AspNet;
 using ShoppingDB.DataContext;
 using ShoppingDB.Helpers;
 using ShoppingDB.Services;
-using IDbConnection = ShoppingDB.Services.IDbConnection;
+using IDbConnection = ShoppingDB.Services.IDbConnectionFactory;
 
 namespace ShoppingDB
 {
@@ -45,7 +45,7 @@ namespace ShoppingDB
             var key = AuthOptions.GetSymmetricSecurityKey();
 
             services.AddControllers();
-
+            services.Configure<MailSettings>(Configuration.GetSection("MailSettings"));
             services.AddSwaggerGen(c =>
             {
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -74,9 +74,8 @@ namespace ShoppingDB
                     }
                 });
             });
-            services.AddReact();
-            services.AddJsEngineSwitcher(options => options.DefaultEngineName = ChakraCoreJsEngine.EngineName).AddChakraCore();
             services.AddTransient<IDbConnection, DapperDbConnection>();
+            services.AddTransient<IMailService, MailService>();
             services.AddScoped<IAdminService, AdminService>();
             services.AddScoped<ICustomerService, CustomerService>();
             services.AddScoped<IAuthService, AuthService>();
@@ -108,6 +107,11 @@ namespace ShoppingDB
                 opts.AddPolicy(Roles.Customer, Roles.CustomerRole());
                 opts.AddPolicy(Roles.Admin, Roles.AdminRole());
             });
+
+            services.AddControllersWithViews()
+                .AddNewtonsoftJson(options =>
+                options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+            );
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

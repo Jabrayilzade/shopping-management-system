@@ -1,9 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
+using Dapper;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using Npgsql;
+using NpgsqlTypes;
 using ShoppingDB.DataContext;
+using ShoppingDB.Dtos;
 using ShoppingDB.Models;
 
 namespace ShoppingDB.Services
@@ -11,8 +18,10 @@ namespace ShoppingDB.Services
     public class AdminService : IAdminService
     {
         private readonly AppDataContext context;
-        public AdminService(AppDataContext context)
+        private readonly IDbConnectionFactory dbConnection;
+        public AdminService(AppDataContext context, IDbConnectionFactory dbConnection)
         {
+            this.dbConnection = dbConnection;
             this.context = context;
         }
 
@@ -55,9 +64,38 @@ namespace ShoppingDB.Services
             return await context.Customers.ToListAsync();
         }
 
-        public Task<List<Customer>> GetCustomersInIntervalAsync()
+        public List<CustomerGetDto> GetCustomersInIntervalAsync(DateTime from, DateTime untill)
         {
-            throw new NotImplementedException();
+            using IDbConnection connection = dbConnection.CreateDbConnection();
+            var query = "select * from customer_info as cv where cv.lastLog <= @untill_date and cv.lastLog >= @from_date";
+            var loggedCustomers = connection.Query<CustomerGetDto>(query, new { untill_date = untill, from_date = from}).ToList();
+            return loggedCustomers;
+        }
+
+        public async Task<UserGetDto> GetUserByIdAsync(int userId)
+        {
+            using IDbConnection connection = dbConnection.CreateDbConnection();
+            var queryResult = await connection.QueryFirstAsync<String>("get_user_info", new { user_id = userId }, commandType: CommandType.StoredProcedure);
+            DefaultContractResolver contractResolver = new DefaultContractResolver
+            {
+                NamingStrategy = new SnakeCaseNamingStrategy()
+            };
+
+            UserGetDto userGetDto = JsonConvert.DeserializeObject<UserGetDto>(queryResult, new JsonSerializerSettings
+            {
+                ContractResolver = contractResolver,
+                Formatting = Formatting.Indented
+            });
+
+            return userGetDto;
+        }
+
+        public async Task<CustomerGetDto> GetCustomerInfoAsync(int customerId)
+        {
+            var query = "select * from customer_info as cv where cv.customerId = @customer_id";
+            using IDbConnection connection = dbConnection.CreateDbConnection();
+            var customer = await connection.QueryFirstAsync<CustomerGetDto>(query, new { customer_id = customerId });
+            return customer;
         }
     }
 }

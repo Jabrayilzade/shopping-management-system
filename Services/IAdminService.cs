@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ShoppingDB.Dtos;
 using ShoppingDB.Models;
 
 namespace ShoppingDB.Services
@@ -16,6 +17,9 @@ namespace ShoppingDB.Services
         Task DeleteProductAsync(int productId);
         Task<bool> SaveAllAsync();
         Task<List<Customer>> GetCustomersAsync();
-        Task<List<Customer>> GetCustomersInIntervalAsync();
+        List<CustomerGetDto> GetCustomersInIntervalAsync(DateTime from, DateTime untill);
+        Task<UserGetDto> GetUserByIdAsync(int userId);
+
+        Task<CustomerGetDto> GetCustomerInfoAsync(int userId);
     }
 }
